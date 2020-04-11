@@ -35,7 +35,7 @@ class Help extends Command {
         );
         let currentCat = "";
         let output = `= Liste des commandes =\n\n[Utiliser ${
-          this.client.config.settings.prefix = settings.prefix
+          this.client.config.defaultSettings.prefix
         }help <nom de la commande> pour plus de détails]\n`;
         const sorted = myCommands
           .array()
