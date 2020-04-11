@@ -76,7 +76,7 @@ module.exports = class {
       return;
 
     // Paramètres
-    const settings = this.client.getSettings(message.guild);
+    const settings = await this.client.getSettings(message.guild);
     message.settings = settings;
     function pretes(guildID) {
       return new Promise((resolve, reject) => {
@@ -91,7 +91,6 @@ module.exports = class {
       });
     }
     const pref = await pretes(message.guild.id);
-    console.log(pref);
     if (message.content.indexOf(pref) !== 0) return;
 
     const args = message.content
@@ -103,7 +102,7 @@ module.exports = class {
     if (message.guild && !message.member)
       await message.guild.fetchMember(message.author);
 
-    const level = this.client.permlevel(message);
+    const level = await this.client.permlevel(message);
 
     const cmd =
       this.client.commands.get(command) ||
