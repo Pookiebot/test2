@@ -102,7 +102,7 @@ module.exports = class {
     if (message.guild && !message.member)
       await message.guild.fetchMember(message.author);
 
-    const level = await this.client.permlevel(message);
+    const level = this.client.permlevel(message);
 
     const cmd =
       this.client.commands.get(command) ||
