@@ -4,29 +4,34 @@ const readdir = promisify(require("fs").readdir);
 const Enmap = require("enmap");
 const klaw = require("klaw");
 const path = require("path");
-const mysql = require("mysql");
-const { getConfig } = require("./config.js")
+const getConfig = require("./modules/settings")
 require("dotenv").config();
 
 class Flareon extends Client {
   constructor(options) {
     super(options);
 
-    
+    this.points = new Enmap({
+      name: "points",
+      cloneLevel: "deep",
+      fetchAll: true,
+      autoFetch: true
+    });
+
+    this.config = require("./config.js");
+
     this.commands = new Collection();
     this.aliases = new Collection();
     this.queue = new Map();
+    const zbub = (async(guild) => {
+      const { settings } = await getConfig(guild)
+      })
+    this.settings = zbub
 
-    this.settings = new Enmap({
-      name: "settings",
-      cloneLevel: "deep",
-      fetchAll: false,
-      autoFetch: true
-    });
     this.warns = new Enmap({
       name: "warns",
       cloneLevel: "deep",
-      fetchAll: false,
+      fetchAll: true,
       autoFetch: true
     });
 
@@ -36,10 +41,10 @@ class Flareon extends Client {
 
   // Permission
 
- async permlevel(message) {
+  permlevel(message) {
     let permlvl = 0;
-    const { permLevels } = await getConfig();
-    const permOrder = permLevels
+
+    const permOrder = this.config.permLevels
       .slice(0)
       .sort((p, c) => (p.level < c.level ? 1 : -1));
 
@@ -92,12 +97,10 @@ class Flareon extends Client {
     ];
     return false;
   }
-  
 
-   async getSettings(guild){
-    const { defaultSettings} = await getConfig();
-    const defaults = defaultSettings
-    const guildData = this.settings.get(guild.id) || {};
+  async getSettings(guild) {
+    const defaults = this.config.defaultSettings || {};
+    const guildData = await this.settings(guild.id) || {};
     const returnObject = {};
     Object.keys(defaults).forEach(key => {
       returnObject[key] = guildData[key] ? guildData[key] : defaults[key];
@@ -105,9 +108,9 @@ class Flareon extends Client {
     return returnObject;
   }
 }
-(async () => {
-const config = await getConfig;
-const client = new Flareon;
+
+const client = new Flareon();
+console.log(client.config.permLevels.map(p => `${p.level}: ${p.name}`));
 
 // Fonction d'initialisation
 
@@ -133,14 +136,14 @@ const init = async () => {
     client.on(eventName, (...args) => event.run(...args));
     delete require.cache[require.resolve(`./events/${file}`)];
   });
+
   client.levelCache = {};
-  const { permLevels } = await getConfig()
-  for (let i = 0; i < permLevels; i++) {
-    const thisLevel = permLevels[i];
+  for (let i = 0; i < client.config.permLevels.length; i++) {
+    const thisLevel = client.config.permLevels[i];
     client.levelCache[thisLevel.name] = thisLevel.level;
   }
 
   client.login(process.env.CLIENT_TOKEN);
-}; 
+};
+
 init();
-})();
