@@ -1,100 +1,50 @@
 /* eslint-disable */
-const DB = require("../modules/db.js");
-const mysql = require("mysql");
+
 module.exports = class {
   constructor(client) {
     this.client = client;
   }
 
-  async run(message) {
-    const db = mysql.createConnection(DB);
-
+  async run(message, getConfig) {
     if (message.author.bot) return;
 
-    let generatedXp = Math.floor(Math.random() * (30 - 10 + 1)) + 10;
-    db.connect(function(err) {
-      if (err) throw err;
-      db.query(
-        `SELECT * FROM players LEFT JOIN server ON id_server = server.server_name WHERE user_id = '${message.author.id}' AND server_id = '${message.guild.id}'`,
-        (err, rows) => {
-          if (err) throw err;
+    if (message.guild) {
+      this.client.points.ensure(`${message.guild.id}-${message.author.id}`, {
+        user: message.author.id,
+        guild: message.guild.id,
+        points: 0,
+        level: 1
+      });
 
-          if (rows.length < 1) {
-            var sql = `INSERT INTO players (id_server, user_id, user, xp, level) VALUES ('${message.guild.name}', '${message.author.id}' , '${message.author.username}', '${generatedXp}', '1')`;
-            db.query(sql, function(err, result) {
-              if (err) throw err;
-              console.log("réussi");
-              message.channel
-                .send("tu a atteint le niveau 1")
-                .then(m => m.delete(2500));
-            });
-          } else {
-            let SNAME = rows[0].user_id;
-            let SID = rows[0].server_id;
-            if (SID !== message.guild.id) {
-              var sql1 = `INSERT INTO players (id_server, user_id, user, xp, level) VALUES ('${message.guild.name}', '${message.author.id}' , '${message.author.username}', '${generatedXp}', '1')`;
-              db.query(sql1, function(err, result) {
-                if (err) throw err;
-                console.log("réussi1");
-                message.channel
-                  .send("tu a atteint le niveau 1")
-                  .then(m => m.delete(2500));
-              });
-            } else if (SNAME === message.author.id) {
-              let xp = rows[0].xp;
-              let LEVEL = rows[0].level;
-              if (xp >= 300) {
-                var sql2 = `UPDATE players SET xp = '0', level ='${LEVEL +
-                  1}' WHERE user_id = '${message.author.id}' AND id_server= '${
-                  message.guild.name
-                }' `;
-                db.query(sql2, function(err, result) {
-                  if (err) throw err;
-                  console.log("réussi2");
-                  message.channel.send(
-                    `tu a monté un lv, tu es maintenant niveau ${LEVEL + 1}`
-                  );
-                });
-              } else {
-                var sql3 = `UPDATE players SET xp = '${xp +
-                  generatedXp}' WHERE user_id = '${
-                  message.author.id
-                }' AND id_server = '${message.guild.name}' `;
-                db.query(sql3, function(err, result) {
-                  if (err) throw err;
-                  console.log("réussi3");
-                });
-              }
-            }
-          }
-        }
+      const key = `${message.guild.id}-${message.author.id}`;
+
+      this.client.points.inc(key, "points");
+
+      const curLvl = Math.floor(
+        0.1 * Math.sqrt(this.client.points.get(key, "points"))
       );
-    });
+
+      if (this.client.points.get(key, "level") < curLvl) {
+        message.reply(
+          `tu es maintenant niveau ***${curLvl}***! Je te fécilite !`
+        );
+        this.client.points.set(key, curLvl, "level");
+      }
+    }
+
     if (
       !message.channel.permissionsFor(message.guild.me).missing("SEND_MESSAGES")
     )
       return;
 
     // Paramètres
-    const settings = await this.client.getSettings(message.guild);
+    const settings = await this.client.getSettings(message.guild)
     message.settings = settings;
-    function pretes(guildID) {
-      return new Promise((resolve, reject) => {
-        db.query(
-          `SELECT prefix FROM server WHERE server_id = '${guildID}'`,
-          function(err, rows) {
-            if (err) return reject(err);
-            rows = rows[0].prefix;
-            resolve(rows);
-          }
-        );
-      });
-    }
-    const pref = await pretes(message.guild.id);
-    if (message.content.indexOf(pref) !== 0) return;
+
+    if (message.content.indexOf(settings.prefix) !== 0) return;
 
     const args = message.content
-      .slice(pref.length)
+      .slice(settings.prefix.length)
       .trim()
       .split(/ +/g);
     const command = args.shift().toLowerCase();
