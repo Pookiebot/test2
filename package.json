@@ -22,7 +22,7 @@
     "fs-minipass": "^1.2.6",
     "helmet": "^3.21.3",
     "klaw": "^2.1.1",
-    "marked": "^0.5.2",
+    "marked": "^0.7.0",
     "memorystore": "^1.6.2",
     "minipass": "^2.6.0",
     "moment": "^2.24.0",
