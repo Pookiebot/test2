@@ -16,7 +16,7 @@
     "dotenv": "^6.2.0",
     "ejs": "^2.7.4",
     "enmap": "^4.8.7",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-passport": "^0.1.0",
     "express-session": "^1.17.0",
     "fs-minipass": "^1.2.6",
